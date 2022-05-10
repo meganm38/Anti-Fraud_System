@@ -16,6 +16,8 @@ public class RegistrationController {
     UserService userService;
     @Autowired
     PasswordEncoder encoder;
+    @Autowired
+    UserRepository userRepository;
 
     @PostMapping("/api/auth/user")
     public ResponseEntity<Object> register(@RequestBody Map<String, String> input) {
@@ -30,12 +32,11 @@ public class RegistrationController {
             return new ResponseEntity<>(null, HttpStatus.CONFLICT);
         }
 
-        User user = new User(name, username, password);
+       User user;
         if (userService.getAllUsers().isEmpty()) {
-            user.setRole("ROLE_ADMINISTRATOR");
+            user = new User(name, username, password, "ROLE_ADMINISTRATOR");
         } else {
-            user.setRole("ROLE_MERCHANT");
-
+            user = new User(name, username, password, "ROLE_MERCHANT");
         }
         userService.saveUser(user);
 
@@ -79,7 +80,7 @@ public class RegistrationController {
         if (user == null) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        if (!role.equals("SUPPORT") || !role.equals("MERCHANT")) {
+        if (!role.equals("SUPPORT") && !role.equals("MERCHANT")) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
         String currentRole = user.getRole().split("_")[1];
@@ -87,10 +88,11 @@ public class RegistrationController {
             return new ResponseEntity<>(null, HttpStatus.CONFLICT);
         }
         user.setRole("ROLE_" + role);
+        userRepository.updateRole("ROLE_" + role, username);
         return new ResponseEntity<>(Map.of("id", user.getId(),
                 "name", user.getName(),
                 "username", user.getUsername(),
-                "role", user.getRole()), HttpStatus.OK);
+                "role", role), HttpStatus.OK);
     }
 
     @PutMapping("/api/auth/access")
@@ -102,9 +104,19 @@ public class RegistrationController {
         if (user == null) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        if (user.getRole().equals("ROLE_ADMINISTRATOR")) {
+        if (user.getRole().equals("ROLE_ADMINISTRATOR") && operation.equals("LOCK")) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
-        return null;
+        if (operation.equals("UNLOCK")) {
+            user.setNonLocked(true);
+            userRepository.updateLock(true, username);
+            return new ResponseEntity<>(Map.of("status", "User " + username + " unlocked!"),
+                    HttpStatus.OK);
+        } else {
+            user.setNonLocked(false);
+            userRepository.updateLock(false, username);
+            return new ResponseEntity<>(Map.of("status", "User " + username + " locked!"),
+                    HttpStatus.OK);
+        }
     }
 }

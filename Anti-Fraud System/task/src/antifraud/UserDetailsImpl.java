@@ -4,6 +4,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+
 import java.util.Collection;
 import java.util.List;
 
@@ -12,22 +13,12 @@ public class UserDetailsImpl implements UserDetails {
     private final String password;
     private final List<GrantedAuthority> rolesAndAuthorities;
     private User user;
-    private boolean isNonLocked;
 
     public UserDetailsImpl(User user) {
         this.user = user;
         username = user.getUsername();
         password = user.getPassword();
         rolesAndAuthorities = List.of(new SimpleGrantedAuthority(user.getRole()));
-        if (user.getRole().equals("ROLE_MERCHANT")) {
-            isNonLocked = false;
-        } else {
-            isNonLocked = true;
-        }
-    }
-
-    public void setLocked(boolean isNonLocked) {
-        this.isNonLocked = isNonLocked;
     }
 
     @Override
@@ -52,7 +43,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return isNonLocked;
+        return user.isNonLocked();
     }
 
     @Override

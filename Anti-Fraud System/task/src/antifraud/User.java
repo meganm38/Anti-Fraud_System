@@ -17,11 +17,19 @@ public class User {
     private Long id;
     @Column
     private String role;
+    @Column
+    private boolean isNonLocked;
 
-    public User(String name, String username, String password) {
+    public User(String name, String username, String password, String role) {
         this.name = name;
         this.username = username;
         this.password = password;
+        this.role = role;
+        if (this.role.equals("ROLE_ADMINISTRATOR")) {
+            isNonLocked = true;
+        } else {
+            isNonLocked = false;
+        }
     }
 
     public User() {
@@ -65,6 +73,14 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public boolean isNonLocked() {
+        return isNonLocked;
+    }
+
+    public void setNonLocked(boolean nonLocked) {
+        isNonLocked = nonLocked;
     }
 
     @Override
