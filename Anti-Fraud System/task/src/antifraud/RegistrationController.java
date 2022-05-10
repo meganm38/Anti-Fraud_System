@@ -35,10 +35,14 @@ public class RegistrationController {
             user.setRole("ROLE_ADMINISTRATOR");
         } else {
             user.setRole("ROLE_MERCHANT");
+
         }
         userService.saveUser(user);
 
-        return new ResponseEntity<>(Map.of("id", user.getId(), "name", name, "username", username),
+        return new ResponseEntity<>(Map.of("id", user.getId(),
+                "name", name,
+                "username", username,
+                "role", user.getRole().split("_")[1]),
                 HttpStatus.CREATED);
     }
 
@@ -49,7 +53,8 @@ public class RegistrationController {
         for (User user : allUsers) {
             response.add(Map.of("id", user.getId(),
                     "name", user.getName(),
-                    "username", user.getUsername()));
+                    "username", user.getUsername(),
+                    "role", user.getRole().split("_")[1]));
         }
 
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -64,5 +69,42 @@ public class RegistrationController {
         userService.deleteUser(user);
         return new ResponseEntity<>(Map.of("username", username, "status", "Deleted successfully!"),
                 HttpStatus.OK);
+    }
+
+    @PutMapping("/api/auth/role")
+    public ResponseEntity<Object> assignRole(@RequestBody Map<String, String> userRole) {
+        String username = userRole.get("username");
+        String role = userRole.get("role");
+        User user = userService.getUserByUsername(username);
+        if (user == null) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+        if (!role.equals("SUPPORT") || !role.equals("MERCHANT")) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+        String currentRole = user.getRole().split("_")[1];
+        if (role.equals(currentRole)) {
+            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+        }
+        user.setRole("ROLE_" + role);
+        return new ResponseEntity<>(Map.of("id", user.getId(),
+                "name", user.getName(),
+                "username", user.getUsername(),
+                "role", user.getRole()), HttpStatus.OK);
+    }
+
+    @PutMapping("/api/auth/access")
+    public ResponseEntity<Object> updateLock(@RequestBody Map<String, String> request) {
+        String username = request.get("username");
+        String operation = request.get("operation");
+
+        User user = userService.getUserByUsername(username);
+        if (user == null) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+        if (user.getRole().equals("ROLE_ADMINISTRATOR")) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+        return null;
     }
 }

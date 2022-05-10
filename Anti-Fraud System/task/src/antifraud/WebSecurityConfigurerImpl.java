@@ -41,9 +41,10 @@ public class WebSecurityConfigurerImpl extends WebSecurityConfigurerAdapter {
                 .authorizeRequests() // manage access
                 .antMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
                 .antMatchers("/actuator/shutdown").permitAll()
-                .antMatchers("/api/auth/list").hasAnyRole("ADMINISTRATOR", "MERCHANT")
-                .antMatchers(HttpMethod.DELETE, "/api/auth/user/*").hasAnyRole("ADMINISTRATOR", "MERCHANT")
-                .anyRequest().permitAll()
+                .antMatchers("/api/auth/list").hasAnyRole("ADMINISTRATOR", "SUPPORT")
+                .antMatchers(HttpMethod.DELETE, "/api/auth/user/*").hasRole("ADMINISTRATOR")
+                .antMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasRole("MERCHANT")
+                .antMatchers(HttpMethod.POST, "/api/auth/access").hasRole("ADMINISTRATOR")
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS); // no session
